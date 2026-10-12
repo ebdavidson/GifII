@@ -5,7 +5,7 @@
 
 #include "GifII.h"
 
-GifII::Color::Color(int r, int g, int b)
+GifII::RGBColor::RGBColor(int r, int g, int b)
 {
     this->red = r;
     this->green = g;
@@ -15,7 +15,7 @@ GifII::Color::Color(int r, int g, int b)
 void GifII::createAnimation()
 {
     // TODO enable passing file path or file data somehow
-    EasyGifReader gif = EasyGifReader::openFile("../myfile.gif");
+    EasyGifReader gif = EasyGifReader::openFile("../testpattern_crop.gif");
 
     const EasyGifReader::Frame frame = gif.begin();
     const EasyGifReader::PixelComponent *framePixels = frame.pixels();
@@ -36,7 +36,7 @@ void GifII::createAnimation()
 
         // TODO write to .slo file
         writeAppleIIPixelsToSlo(gifAppleIIPixels, frameIndex);
-        
+
         frameIndex++;
     }
 
@@ -50,13 +50,13 @@ GifII::FrameData::FrameData(int w, int h, const EasyGifReader::PixelComponent *e
     this->width = w;
     this->height = h;
 
-    std::vector<GifII::Color> colorPixels = {};
+    std::vector<GifII::RGBColor> colorPixels = {};
 
     // EasyGifReader stores each pixel as a 32-byte RGBA value; we can disregard the A value (which just indicates transparency) for this simple approach
     for (int i = 0; i < (width * height * 4); i += 4)
     {
         colorPixels.push_back(
-            GifII::Color(
+            GifII::RGBColor(
                 (int)easyGifReaderPixels[i + 0],
                 (int)easyGifReaderPixels[i + 1],
                 (int)easyGifReaderPixels[i + 2]));
@@ -70,7 +70,7 @@ void GifII::FrameData::resizeFrame(int newWidth, int newHeight)
     double xScalingRatio = (width * 1.0) / newWidth;
     double yScalingRatio = (height * 1.0) / newHeight;
 
-    std::vector<GifII::Color> newPixels = {};
+    std::vector<GifII::RGBColor> newPixels = {};
     for (int r = 0; r < newHeight; r++)
     {
         for (int c = 0; c < newWidth; c++)
@@ -83,9 +83,11 @@ void GifII::FrameData::resizeFrame(int newWidth, int newHeight)
     }
 
     this->pixels = newPixels;
+    this->width = newWidth;
+    this->height = newHeight;
 }
 
-std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector<GifII::Color> &palette)
+std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector<GifII::RGBColor> &palette)
 {
     std::vector<unsigned char> appleIIPixels = {};
     unsigned char currentPixel = 0;
@@ -93,13 +95,13 @@ std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector
     // for each color, find the closest color in the Apple II palette
     for (int i = 0; i < this->pixels.size(); i++)
     {
-        Color color = this->pixels[i];
+        RGBColor color = this->pixels[i];
         int closestColorIndex = 0;
         double closestColorDistance = 442.0; // higher than the hypothetical max distance of ~441.672 from white to black
 
         for (int j = 0; j < palette.size(); j++)
         {
-            GifII::Color appleIIColor = palette[j];
+            GifII::RGBColor appleIIColor = palette[j];
             double distance = color.getDistanceFromColor(appleIIColor);
             if (distance < closestColorDistance)
             {
@@ -120,7 +122,7 @@ std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector
         {
             // first value
             currentPixel = closestColorIndex;
-            currentPixel << 4; // shift four bits left
+            currentPixel <<= 4;
         }
     }
 
@@ -131,7 +133,7 @@ void GifII::writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileI
 {
     // open file stream
     std::string fileName = std::to_string(fileIndex) + ".SLO";
-    std::ofstream stream(fileName, std::ios::out | std::ios::binary | std::ios::app);
+    std::ofstream stream(fileName, std::ios::out | std::ios::binary);
 
     // write each two-pixel byte to file as raw binary
     for (unsigned char pixel : pixels)
@@ -143,7 +145,7 @@ void GifII::writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileI
     stream.close();
 }
 
-double GifII::Color::getDistanceFromColor(const Color &c)
+double GifII::RGBColor::getDistanceFromColor(const RGBColor &c)
 {
     // Euclidian distance algorithm
 
