@@ -11,6 +11,9 @@ public:
     void createAnimation();
 
 private:
+    const int APPLEII_WIDTH = 40;
+    const int APPLEII_HEIGHT = 48;
+
     // used for representing basic RGB colors
     struct RGBColor
     {
@@ -19,6 +22,9 @@ private:
         int blue;
 
         RGBColor(int r, int g, int b);
+
+        // get closest Apple II color as its graphics index
+        int getClosestAppleIIPaletteIndex();
 
         // get Euclidian distance from another color, used to find closest palette match
         double getDistanceFromColor(const RGBColor &c);
@@ -40,7 +46,7 @@ private:
 
     // These color values taken from this Wikipedia article: https://en.wikipedia.org/wiki/Apple_II_graphics
     // May not be perfect but close enough to approximate color distance
-    const std::vector<GifII::RGBColor> APPLE_II_PALETTE = {
+    const static inline std::vector<GifII::RGBColor> APPLE_II_PALETTE = {
         RGBColor(0, 0, 0),       // BLACK
         RGBColor(176, 2, 88),    // MAGENTA
         RGBColor(30, 43, 255),   // DARK BLUE

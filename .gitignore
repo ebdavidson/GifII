@@ -7,3 +7,4 @@ cmake_install.cmake
 notes.md
 *.gif
 Makefile
+images
