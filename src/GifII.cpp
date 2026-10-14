@@ -93,14 +93,39 @@ std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector
     std::vector<unsigned char> currentTwoRowsPixels = {};
 
     // pixels are stored as vertically stacked four-bit values in binary, so we have to do two rows at a time
-    for (int r = 0; r < 48; r += 2)
+    for (int r = 0; r < 16; r += 2)
     {
         for (int c = 0; c < 40; c++)
         {
+            // top third row
             int firstPixel = pixels[(r * 40) + c].getClosestAppleIIPaletteIndex();
             int secondPixel = pixels[((r + 1) * 40) + c].getClosestAppleIIPaletteIndex();
-            unsigned char finalByte = (secondPixel << 4) + firstPixel;
-            appleIIPixels.push_back(finalByte);
+            unsigned char topThirdByte = (secondPixel << 4) + firstPixel;
+            appleIIPixels.push_back(topThirdByte);
+        }
+
+        for (int c = 0; c < 40; c++)
+        {
+            // middle third row
+            int thirdPixel = pixels[((r + 16) * 40) + c].getClosestAppleIIPaletteIndex();
+            int fourthPixel = pixels[((r + 17) * 40) + c].getClosestAppleIIPaletteIndex();
+            unsigned char middleThirdByte = (fourthPixel << 4) + thirdPixel;
+            appleIIPixels.push_back(middleThirdByte);
+        }
+
+        for (int c = 0; c < 40; c++)
+        {
+            // bottom third row
+            int fifthPixel = pixels[((r + 32) * 40) + c].getClosestAppleIIPaletteIndex();
+            int sixthPixel = pixels[((r + 33) * 40) + c].getClosestAppleIIPaletteIndex();
+            unsigned char bottomThirdByte = (sixthPixel << 4) + fifthPixel;
+            appleIIPixels.push_back(bottomThirdByte);
+        }
+
+        // screen holes
+        for (int c = 0; c < 8; c++)
+        {
+            appleIIPixels.push_back((unsigned char)0); // placeholder
         }
     }
 
