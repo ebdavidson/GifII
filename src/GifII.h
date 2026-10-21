@@ -44,6 +44,8 @@ private:
 
     void writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileIndex);
 
+    void writeBasicProgram(std::vector<int> frameDelaysMs);
+
     // These color values taken from this Wikipedia article: https://en.wikipedia.org/wiki/Apple_II_graphics
     // May not be perfect but close enough to approximate color distance
     const static inline std::vector<GifII::RGBColor> APPLE_II_PALETTE = {

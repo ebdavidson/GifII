@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <cmath>
 
@@ -24,8 +25,11 @@ void GifII::createAnimation()
 
     // loop through each frame and get Apple II image
     int frameIndex = 0;
+    std::vector<int> frameDelaysMs = {};
     for (const EasyGifReader::Frame &easyGifReaderFrame : gif)
     {
+        frameDelaysMs.push_back(easyGifReaderFrame.delay * 10);
+
         GifII::FrameData frame(easyGifReaderFrame.width(), easyGifReaderFrame.height(), easyGifReaderFrame.pixels());
 
         // reduce to Apple II lo-res size
@@ -40,7 +44,8 @@ void GifII::createAnimation()
         frameIndex++;
     }
 
-    // TODO generate assembly file
+    // generate BASIC file
+    writeBasicProgram(frameDelaysMs);
 
     // TODO write all files to Apple II disk image and return
 }
@@ -146,6 +151,40 @@ void GifII::writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileI
 
     // dispose of stream
     stream.close();
+}
+
+void GifII::writeBasicProgram(std::vector<int> frameDelaysMs)
+{
+    // read in BASIC source from template file
+    std::ifstream basicSrc("../assets/startup.bas");
+    std::stringstream basicBuffer;
+    basicBuffer << basicSrc.rdbuf();
+    std::string basicStr = basicBuffer.str();
+    basicSrc.close();
+
+    // TODO move these to header
+    const std::string framesReplace = "[FRAMES_REPLACE]";
+    const std::string dataReplace = "[DATA_REPLACE]";
+    const double MS_PER_LOOP = 9.63;
+
+    // replace placeholders with number of frames in animation, and how many wait-loops to do for each frame
+    std::string framesStr = std::to_string(frameDelaysMs.size());
+    std::string dataStr = "";
+    for(int i = 0; i < frameDelaysMs.size(); i++){
+        int delay = frameDelaysMs[i] / MS_PER_LOOP; 
+        dataStr += std::to_string(delay);
+        if(i < frameDelaysMs.size() - 1) dataStr += ",";
+    }
+
+    size_t replacePos = basicStr.find(framesReplace);
+    basicStr.replace(replacePos, framesReplace.size(), framesStr);
+    replacePos = basicStr.find(dataReplace);
+    basicStr.replace(replacePos, dataReplace.size(), dataStr);
+
+    // write to final BASIC file
+    std::ofstream basicOut("startup.bas");
+    basicOut << basicStr;
+    basicOut.close();
 }
 
 int GifII::RGBColor::getClosestAppleIIPaletteIndex()

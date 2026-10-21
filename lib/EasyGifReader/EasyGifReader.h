@@ -15,14 +15,16 @@
 //  https://github.com/Chlumsky/EasyGifReader
 //
 
-class EasyGifReader {
+class EasyGifReader
+{
     struct Internal;
     struct FrameBounds;
 
 public:
     typedef unsigned char PixelComponent;
 
-    enum class Error {
+    enum class Error
+    {
         UNKNOWN,
         INVALID_OPERATION,
         OPEN_FAILED,
@@ -37,7 +39,8 @@ public:
         UNEXPECTED_EOF
     };
 
-    struct FrameDuration {
+    struct FrameDuration
+    {
         int centiseconds;
         int milliseconds() const;
         double seconds() const;
@@ -53,7 +56,8 @@ public:
         bool operator>=(FrameDuration other) const;
     };
 
-    class Frame {
+    class Frame
+    {
     public:
         Frame();
         Frame(const Frame &orig);
@@ -66,22 +70,26 @@ public:
         int height() const;
         FrameDuration duration() const;
         FrameDuration rawDuration() const;
+        int delay;
+
     protected:
         const Internal *parentData;
         int index;
         int w, h;
         void nextFrame();
+
     private:
         PixelComponent *pixelBuffer;
         int disposal;
-        int delay;
         PixelComponent *row(int y);
         PixelComponent *corner(const FrameBounds &bounds);
     };
 
-    class FrameIterator : public Frame {
+    class FrameIterator : public Frame
+    {
     public:
-        enum Position {
+        enum Position
+        {
             BEGIN,
             END,
             LOOP_END
@@ -120,5 +128,4 @@ private:
     Internal *data;
 
     explicit EasyGifReader(Internal *data);
-
 };
