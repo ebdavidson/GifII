@@ -6,22 +6,15 @@
 
 #include "GifII.h"
 
-GifII::RGBColor::RGBColor(int r, int g, int b)
-{
-    this->red = r;
-    this->green = g;
-    this->blue = b;
-}
-
 void GifII::createAnimation()
 {
-    // TODO enable passing file path or file data somehow
+    // TODO enable passing file path or file data by command line
     EasyGifReader gif = EasyGifReader::openFile("../testpattern_crop.gif");
 
     const EasyGifReader::Frame frame = gif.begin();
     const EasyGifReader::PixelComponent *framePixels = frame.pixels();
 
-    // TODO reduce to target number of frames, and store frame delay times
+    // TODO reduce to target number of frames, and update frame delay times
 
     // loop through each frame and get Apple II image
     int frameIndex = 0;
@@ -170,10 +163,12 @@ void GifII::writeBasicProgram(std::vector<int> frameDelaysMs)
     // replace placeholders with number of frames in animation, and how many wait-loops to do for each frame
     std::string framesStr = std::to_string(frameDelaysMs.size());
     std::string dataStr = "";
-    for(int i = 0; i < frameDelaysMs.size(); i++){
-        int delay = frameDelaysMs[i] / MS_PER_LOOP; 
+    for (int i = 0; i < frameDelaysMs.size(); i++)
+    {
+        int delay = frameDelaysMs[i] / MS_PER_LOOP;
         dataStr += std::to_string(delay);
-        if(i < frameDelaysMs.size() - 1) dataStr += ",";
+        if (i < frameDelaysMs.size() - 1)
+            dataStr += ",";
     }
 
     size_t replacePos = basicStr.find(framesReplace);
@@ -185,6 +180,13 @@ void GifII::writeBasicProgram(std::vector<int> frameDelaysMs)
     std::ofstream basicOut("startup.bas");
     basicOut << basicStr;
     basicOut.close();
+}
+
+GifII::RGBColor::RGBColor(int r, int g, int b)
+{
+    this->red = r;
+    this->green = g;
+    this->blue = b;
 }
 
 int GifII::RGBColor::getClosestAppleIIPaletteIndex()
