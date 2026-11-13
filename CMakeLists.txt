@@ -17,4 +17,12 @@ target_sources(GifII
     lib/giflib/openbsd-reallocarray.c
     lib/EasyGifReader/EasyGifReader.h
     lib/EasyGifReader/EasyGifReader.cpp
+    lib/Cadius/Dc_Prodos.h
+    lib/Cadius/Dc_Prodos.c
+    lib/Cadius/Dc_Shared.c
+    lib/Cadius/Dc_Shared.h
+    lib/Cadius/Dc_Memory.c
+    lib/Cadius/Prodos_Add.c
+    lib/Cadius/Prodos_Create.c
+    lib/Cadius/Dc_OS.c
 )

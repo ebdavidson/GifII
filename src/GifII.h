@@ -44,7 +44,9 @@ private:
 
     void writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileIndex);
 
-    void writeBasicProgram(std::vector<int> frameDelaysMs);
+    void writeDelayBinary(std::vector<short> frameDelaysMs);
+
+    void createProDosDisk(int frameCount);
 
     // These color values taken from this Wikipedia article: https://en.wikipedia.org/wiki/Apple_II_graphics
     // May not be perfect but close enough to approximate color distance

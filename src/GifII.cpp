@@ -3,6 +3,13 @@
 #include <sstream>
 #include <string>
 #include <cmath>
+#include <cstdint>
+
+extern "C"
+{
+#include <Cadius/Dc_Prodos.h>
+#include <Cadius/Prodos_Add.h>
+}
 
 #include "GifII.h"
 
@@ -16,12 +23,18 @@ void GifII::createAnimation()
 
     // TODO reduce to target number of frames, and update frame delay times
 
+    // TODO Move to header as constant
+    const double MS_PER_LOOP = 9.63;
+
     // loop through each frame and get Apple II image
     int frameIndex = 0;
-    std::vector<int> frameDelaysMs = {};
+    std::vector<short> frameDelaysMs = {};
     for (const EasyGifReader::Frame &easyGifReaderFrame : gif)
     {
-        frameDelaysMs.push_back(easyGifReaderFrame.delay * 10);
+        int currDelay = easyGifReaderFrame.delay * 10;
+        if (currDelay > 32767)
+            currDelay = 32767; // Clamp to max signed 16-bit value
+        frameDelaysMs.push_back((short)currDelay / MS_PER_LOOP);
 
         GifII::FrameData frame(easyGifReaderFrame.width(), easyGifReaderFrame.height(), easyGifReaderFrame.pixels());
 
@@ -38,9 +51,10 @@ void GifII::createAnimation()
     }
 
     // generate BASIC file
-    writeBasicProgram(frameDelaysMs);
+    writeDelayBinary(frameDelaysMs);
 
     // TODO write all files to Apple II disk image and return
+    createProDosDisk(frameDelaysMs.size());
 }
 
 GifII::FrameData::FrameData(int w, int h, const EasyGifReader::PixelComponent *easyGifReaderPixels)
@@ -120,7 +134,7 @@ std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector
             appleIIPixels.push_back(bottomThirdByte);
         }
 
-        // screen holes
+        // accounting for screen holes
         for (int c = 0; c < 8; c++)
         {
             appleIIPixels.push_back((unsigned char)0); // placeholder
@@ -133,7 +147,7 @@ std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector
 void GifII::writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileIndex)
 {
     // open file stream
-    std::string fileName = std::to_string(fileIndex) + ".SLO";
+    std::string fileName = "X" + std::to_string(fileIndex) + ".SLO";
     std::ofstream stream(fileName, std::ios::out | std::ios::binary);
 
     // write each byte of two vertical pixels to file as raw binary
@@ -146,40 +160,51 @@ void GifII::writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileI
     stream.close();
 }
 
-void GifII::writeBasicProgram(std::vector<int> frameDelaysMs)
+void GifII::writeDelayBinary(std::vector<short> frameDelaysMs)
 {
-    // read in BASIC source from template file
-    std::ifstream basicSrc("../assets/startup.bas");
-    std::stringstream basicBuffer;
-    basicBuffer << basicSrc.rdbuf();
-    std::string basicStr = basicBuffer.str();
-    basicSrc.close();
+    // open file stream
+    std::string fileName = "DELAY.SLO";
+    std::ofstream stream(fileName, std::ios::out | std::ios::binary);
 
-    // TODO move these to header
-    const std::string framesReplace = "[FRAMES_REPLACE]";
-    const std::string dataReplace = "[DATA_REPLACE]";
-    const double MS_PER_LOOP = 9.63;
+    // add the number of frames to the beginning of the list for use in the BASIC program
+    frameDelaysMs.insert(frameDelaysMs.begin(), frameDelaysMs.size());
 
-    // replace placeholders with number of frames in animation, and how many wait-loops to do for each frame
-    std::string framesStr = std::to_string(frameDelaysMs.size());
-    std::string dataStr = "";
-    for (int i = 0; i < frameDelaysMs.size(); i++)
+    // write frame count and each two-byte delay value to file as raw binary
+    // force big-endian so it's correct layout for Apple II
+    for (short delay : frameDelaysMs)
     {
-        int delay = frameDelaysMs[i] / MS_PER_LOOP;
-        dataStr += std::to_string(delay);
-        if (i < frameDelaysMs.size() - 1)
-            dataStr += ",";
+        unsigned char largeByte = delay / 256;
+        unsigned char smallByte = delay % 256;
+        stream << largeByte;
+        stream << smallByte;
     }
 
-    size_t replacePos = basicStr.find(framesReplace);
-    basicStr.replace(replacePos, framesReplace.size(), framesStr);
-    replacePos = basicStr.find(dataReplace);
-    basicStr.replace(replacePos, dataReplace.size(), dataStr);
+    // dispose of stream
+    stream.close();
+}
 
-    // write to final BASIC file
-    std::ofstream basicOut("startup.bas");
-    basicOut << basicStr;
-    basicOut.close();
+void GifII::createProDosDisk(int frameCount)
+{
+    // create a copy of template disk
+    std::ifstream templateStream("../assets/template.po", std::ios::binary);
+    std::ofstream diskStream("./animation.po", std::ios::binary);
+    diskStream << templateStream.rdbuf();
+    templateStream.close();
+    diskStream.close();
+
+    // use DiskImg methods to load template ProDos disk and add our files
+    std::string templateImgPath = "./animation.po";
+    prodos_image *img = LoadProdosImage(templateImgPath.data());
+
+    std::string fileToAdd = "";
+    std::string folder = "/PRODOS/";
+    for (int i = 0; i < frameCount; i++)
+    {
+        fileToAdd = "X" + std::to_string(i) + ".SLO";
+        AddFile(img, fileToAdd.data(), folder.data(), 1);
+    }
+    fileToAdd = "DELAY.SLO";
+    AddFile(img, fileToAdd.data(), folder.data(), 1);
 }
 
 GifII::RGBColor::RGBColor(int r, int g, int b)
