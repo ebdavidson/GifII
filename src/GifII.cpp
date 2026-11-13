@@ -13,10 +13,10 @@ extern "C"
 
 #include "GifII.h"
 
-void GifII::createAnimation()
+void GifII::createAnimation(std::string gifPath)
 {
     // TODO enable passing file path or file data by command line
-    EasyGifReader gif = EasyGifReader::openFile("../testpattern_crop.gif");
+    EasyGifReader gif = EasyGifReader::openFile(gifPath.c_str());
 
     const EasyGifReader::Frame frame = gif.begin();
     const EasyGifReader::PixelComponent *framePixels = frame.pixels();
@@ -53,8 +53,10 @@ void GifII::createAnimation()
     // generate BASIC file
     writeDelayBinary(frameDelaysMs);
 
-    // TODO write all files to Apple II disk image and return
+    // write all files to Apple II disk image
     createProDosDisk(frameDelaysMs.size());
+
+    // TODO cleanup temp files
 }
 
 GifII::FrameData::FrameData(int w, int h, const EasyGifReader::PixelComponent *easyGifReaderPixels)

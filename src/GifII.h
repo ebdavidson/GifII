@@ -2,13 +2,14 @@
 
 #include <vector>
 #include <EasyGifReader/EasyGifReader.h>
+#include <string>
 
 class GifII
 {
 
 public:
     // primary class method, converts GIF input into Apple II animation disk
-    void createAnimation();
+    void createAnimation(std::string gifPath);
 
 private:
     const int APPLEII_WIDTH = 40;
