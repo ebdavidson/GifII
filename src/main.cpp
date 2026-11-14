@@ -8,6 +8,11 @@ int main(int argc, char *argv[])
 {
     try
     {
+        if (!std::filesystem::exists("GIFII_TEMPLATE_DISK.po"))
+        {
+            throw std::runtime_error("Cannot find GifII template disk in this directory");
+        }
+
         if (argc < 2)
         {
             throw std::runtime_error("Must provide GIF filename");
@@ -34,6 +39,6 @@ int main(int argc, char *argv[])
     }
     catch (std::exception &e)
     {
-        std::cout << e.what() << std::endl;
+        std::cout << "Error: " << e.what() << std::endl;
     }
 }
