@@ -12,11 +12,11 @@ public:
     std::string createAnimation(std::string gifPath);
 
 private:
-    const int APPLEII_WIDTH = 40;
-    const int APPLEII_HEIGHT = 48;
-    const int MAX_NUM_FRAMES = 47;
-    const double MS_PER_LOOP = 9.63;
-    const std::string TEMP_DIRECTORY = "./gifii_temp/";
+    const int APPLEII_WIDTH = 40; // Lo-Res width is 40 pixels
+    const int APPLEII_HEIGHT = 48; // Lo-Res fullscreen height is 48 pixels
+    const int MAX_NUM_FRAMES = 45; // ProDos supports 50 files at disk root. ProDOS, Applesoft BASIC, our BASIC code, and guaranteed first and last frames leaves 45 to spare  
+    const double MS_PER_LOOP = 9.63; // This is roughly how long each wasted for loop cycle seems to take in enhanced-speed AppleWin
+    const std::string TEMP_DIRECTORY = "./gifii_temp/"; // this gets created and cleaned up on each run
 
     // used for representing basic RGB colors
     struct RGBColor
