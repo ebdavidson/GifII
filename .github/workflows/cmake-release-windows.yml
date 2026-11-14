@@ -28,11 +28,11 @@ jobs:
 
     - name: Create Release Zip
       env:
-        RELEASE_ID: ${{ github.event.release.id }}
-      run: Compress-Archive -Path build/Release/* -Destination GifII-Windows-${RELEASE_ID}.zip
+        RELEASE_ID: ${{ github.event.release.tag_name }}
+      run: Compress-Archive -Path build/Release/* -Destination GifII-Windows-$env:RELEASE_ID.zip
 
     - name: Upload to Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        RELEASE_ID: ${{ github.event.release.id }}
-      run: gh release upload ${RELEASE_ID} GifII-Windows-${RELEASE_ID}.zip
+        RELEASE_ID: ${{ github.event.release.tag_name }}
+      run: gh release upload $env:RELEASE_ID GifII-Windows-$env:RELEASE_ID.zip
