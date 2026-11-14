@@ -31,3 +31,9 @@ target_sources(GifII
     lib/Cadius/Prodos_Create.c
     lib/Cadius/Dc_OS.c
 )
+
+add_custom_command(
+        TARGET GifII POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_CURRENT_SOURCE_DIR}/assets/GIFII_TEMPLATE_DISK.po
+                ${CMAKE_CURRENT_BINARY_DIR}/GIFII_TEMPLATE_DISK.po)
