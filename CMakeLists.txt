@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.23)
 
 project(GifII)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/GIFII_TEMPLATE_DISK.po ${CMAKE_CURRENT_BINARY_DIR}/GIFII_TEMPLATE_DISK.po COPYONLY)
 
 include_directories("lib")
@@ -28,3 +31,11 @@ target_sources(GifII
     lib/Cadius/Prodos_Create.c
     lib/Cadius/Dc_OS.c
 )
+
+add_custom_command(
+        TARGET GifII POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_CURRENT_SOURCE_DIR}/assets/GIFII_TEMPLATE_DISK.po
+                $<TARGET_PROPERTY:GifII,BINARY_DIR>/$<CONFIGURATION>/GIFII_TEMPLATE_DISK.po)
+
+                
