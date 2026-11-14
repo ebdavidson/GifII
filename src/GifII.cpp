@@ -13,15 +13,20 @@ extern "C"
 
 #include "GifII.h"
 
-void GifII::createAnimation(std::string gifPath)
+std::string GifII::createAnimation(std::string gifPath)
 {
-    // TODO enable passing file path or file data by command line
     EasyGifReader gif = EasyGifReader::openFile(gifPath.c_str());
+
+    // reduce to target number of frames, and update frame delay times
+    const int MAX_NUM_FRAMES = 47; // TODO move to header as constnat
+    int frameModToSkip = 10000; // never skip if less than max frames
+    if (gif.frameCount() > MAX_NUM_FRAMES)
+    {
+        frameModToSkip = ceil(1.0 / ((MAX_NUM_FRAMES * 1.0) / gif.frameCount()));
+    }
 
     const EasyGifReader::Frame frame = gif.begin();
     const EasyGifReader::PixelComponent *framePixels = frame.pixels();
-
-    // TODO reduce to target number of frames, and update frame delay times
 
     // TODO Move to header as constant
     const double MS_PER_LOOP = 9.63;
@@ -31,32 +36,37 @@ void GifII::createAnimation(std::string gifPath)
     std::vector<short> frameDelaysMs = {};
     for (const EasyGifReader::Frame &easyGifReaderFrame : gif)
     {
-        int currDelay = easyGifReaderFrame.delay * 10;
-        if (currDelay > 32767)
-            currDelay = 32767; // Clamp to max signed 16-bit value
-        frameDelaysMs.push_back((short)currDelay / MS_PER_LOOP);
+        if (frameIndex % frameModToSkip != 0)
+        {
+            int currDelay = easyGifReaderFrame.delay * 10;
+            if (currDelay > 32767)
+                currDelay = 32767; // Clamp to max signed 16-bit value
+            frameDelaysMs.push_back((short)currDelay / MS_PER_LOOP);
 
-        GifII::FrameData frame(easyGifReaderFrame.width(), easyGifReaderFrame.height(), easyGifReaderFrame.pixels());
+            GifII::FrameData frame(easyGifReaderFrame.width(), easyGifReaderFrame.height(), easyGifReaderFrame.pixels());
 
-        // reduce to Apple II lo-res size
-        frame.resizeFrame(APPLEII_WIDTH, APPLEII_HEIGHT);
+            // reduce to Apple II lo-res size
+            frame.resizeFrame(APPLEII_WIDTH, APPLEII_HEIGHT);
 
-        // get pixels in Apple II lo-res format
-        std::vector<unsigned char> gifAppleIIPixels = frame.getLoResPixelData(GifII::APPLE_II_PALETTE);
+            // get pixels in Apple II lo-res format
+            std::vector<unsigned char> gifAppleIIPixels = frame.getLoResPixelData(GifII::APPLE_II_PALETTE);
 
-        // write to .slo file
-        writeAppleIIPixelsToSlo(gifAppleIIPixels, frameIndex);
+            // write to .slo file
+            writeAppleIIPixelsToSlo(gifAppleIIPixels, frameDelaysMs.size() - 1);
+        }
 
         frameIndex++;
     }
 
-    // generate BASIC file
+    // generate delays binary file
     writeDelayBinary(frameDelaysMs);
 
     // write all files to Apple II disk image
-    createProDosDisk(frameDelaysMs.size());
+    std::string outPath = createProDosDisk(frameDelaysMs.size(), gifPath);
 
     // TODO cleanup temp files
+
+    return outPath;
 }
 
 GifII::FrameData::FrameData(int w, int h, const EasyGifReader::PixelComponent *easyGifReaderPixels)
@@ -81,6 +91,7 @@ GifII::FrameData::FrameData(int w, int h, const EasyGifReader::PixelComponent *e
 
 void GifII::FrameData::resizeFrame(int newWidth, int newHeight)
 {
+    // resizes to Apple II image size using nearest-neighbor scaling
     double xScalingRatio = (width * 1.0) / newWidth;
     double yScalingRatio = (height * 1.0) / newHeight;
 
@@ -168,6 +179,13 @@ void GifII::writeDelayBinary(std::vector<short> frameDelaysMs)
     std::string fileName = "DELAY.SLO";
     std::ofstream stream(fileName, std::ios::out | std::ios::binary);
 
+    // remove this to create delays suitable for emulating with enhanced read access
+    // see my blog post for more info on why I effectively disabled delay logic but didn't remove it
+    for (int i = 0; i < frameDelaysMs.size(); i++)
+    {
+        frameDelaysMs[i] = 1;
+    }
+
     // add the number of frames to the beginning of the list for use in the BASIC program
     frameDelaysMs.insert(frameDelaysMs.begin(), frameDelaysMs.size());
 
@@ -185,17 +203,28 @@ void GifII::writeDelayBinary(std::vector<short> frameDelaysMs)
     stream.close();
 }
 
-void GifII::createProDosDisk(int frameCount)
+std::string GifII::createProDosDisk(int frameCount, std::string sourcePath)
 {
+    // get name for disk
+    int lastDelimiter = sourcePath.find_last_of("/");
+    if (lastDelimiter >= 0)
+    {
+        sourcePath = sourcePath.substr(lastDelimiter + 1);
+    }
+
+    lastDelimiter = sourcePath.find_last_of(".");
+    sourcePath = sourcePath.substr(0, lastDelimiter);
+    sourcePath += ".po";
+
     // create a copy of template disk
-    std::ifstream templateStream("../assets/template.po", std::ios::binary);
-    std::ofstream diskStream("./animation.po", std::ios::binary);
+    std::ifstream templateStream("../assets/template.po", std::ios::binary | std::ios::in);
+    std::ofstream diskStream(sourcePath, std::ios::binary | std::ios::out);
     diskStream << templateStream.rdbuf();
     templateStream.close();
     diskStream.close();
 
     // use DiskImg methods to load template ProDos disk and add our files
-    std::string templateImgPath = "./animation.po";
+    std::string templateImgPath = sourcePath;
     prodos_image *img = LoadProdosImage(templateImgPath.data());
 
     std::string fileToAdd = "";
@@ -207,6 +236,8 @@ void GifII::createProDosDisk(int frameCount)
     }
     fileToAdd = "DELAY.SLO";
     AddFile(img, fileToAdd.data(), folder.data(), 1);
+
+    return sourcePath;
 }
 
 GifII::RGBColor::RGBColor(int r, int g, int b)

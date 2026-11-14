@@ -9,7 +9,7 @@ class GifII
 
 public:
     // primary class method, converts GIF input into Apple II animation disk
-    void createAnimation(std::string gifPath);
+    std::string createAnimation(std::string gifPath);
 
 private:
     const int APPLEII_WIDTH = 40;
@@ -47,7 +47,7 @@ private:
 
     void writeDelayBinary(std::vector<short> frameDelaysMs);
 
-    void createProDosDisk(int frameCount);
+    std::string createProDosDisk(int frameCount, std::string sourcePath);
 
     // These color values taken from this Wikipedia article: https://en.wikipedia.org/wiki/Apple_II_graphics
     // May not be perfect but close enough to approximate color distance

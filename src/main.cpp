@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <filesystem>
 
 int main(int argc, char *argv[])
 {
@@ -18,11 +19,18 @@ int main(int argc, char *argv[])
 
         if (fileEnding.compare(".GIF") != 0)
         {
-            throw std::runtime_error("Invalid filetype, must provide GIF");
+            throw std::runtime_error("Invalid path, file must be GIF");
+        }
+
+        if (!std::filesystem::exists(gifPath))
+        {
+            throw std::runtime_error("Invalid path, file does not exist");
         }
 
         GifII gifII = GifII();
-        gifII.createAnimation(gifPath);
+        std::string diskName = gifII.createAnimation(gifPath);
+
+        std::cout << "File generated: " << diskName << std::endl;
     }
     catch (std::exception &e)
     {
