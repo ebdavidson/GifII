@@ -67,7 +67,7 @@ std::string GifII::createAnimation(std::string gifPath)
     // write all files to Apple II disk image
     std::string outPath = createProDosDisk(frameDelaysMs.size(), gifPath);
 
-    // TODO cleanup temp files
+    // cleanup temp files
     std::filesystem::remove_all(TEMP_DIRECTORY);
 
     return outPath;
