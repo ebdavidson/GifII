@@ -26,9 +26,14 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Upload Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: GifII-Windows
-        path: build/Release
+    - name: Create Release Zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_ID: ${{ github.event.release.id }}
+      run: Compress-Archive -Path build/Release/* -Destination GifII-Windows-${RELEASE_ID}.zip
 
+    - name: Upload to Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_ID: ${{ github.event.release.id }}
+      run: gh release upload ${RELEASE_ID} GifII-Windows-${RELEASE_ID}.zip
