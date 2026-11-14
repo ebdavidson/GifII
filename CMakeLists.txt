@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.23)
 
 project(GifII)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/assets/GIFII_TEMPLATE_DISK.po ${CMAKE_CURRENT_BINARY_DIR}/GIFII_TEMPLATE_DISK.po COPYONLY)
+
 include_directories("lib")
 
 add_executable(GifII)

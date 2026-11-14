@@ -14,6 +14,9 @@ public:
 private:
     const int APPLEII_WIDTH = 40;
     const int APPLEII_HEIGHT = 48;
+    const int MAX_NUM_FRAMES = 47;
+    const double MS_PER_LOOP = 9.63;
+    const std::string TEMP_DIRECTORY = "./gifii_temp/";
 
     // used for representing basic RGB colors
     struct RGBColor

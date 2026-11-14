@@ -4,6 +4,7 @@
 #include <string>
 #include <cmath>
 #include <cstdint>
+#include <filesystem>
 
 extern "C"
 {
@@ -15,33 +16,28 @@ extern "C"
 
 std::string GifII::createAnimation(std::string gifPath)
 {
+    std::filesystem::create_directories(TEMP_DIRECTORY);
+
     EasyGifReader gif = EasyGifReader::openFile(gifPath.c_str());
 
     // reduce to target number of frames, and update frame delay times
-    const int MAX_NUM_FRAMES = 47; // TODO move to header as constnat
-    int frameModToSkip = 10000; // never skip if less than max frames
+    int frameModToKeep = 1; // never skip if less than max frames
     if (gif.frameCount() > MAX_NUM_FRAMES)
     {
-        frameModToSkip = ceil(1.0 / ((MAX_NUM_FRAMES * 1.0) / gif.frameCount()));
+        frameModToKeep = ceil(1.0 / ((MAX_NUM_FRAMES * 1.0) / gif.frameCount()));
     }
-
-    const EasyGifReader::Frame frame = gif.begin();
-    const EasyGifReader::PixelComponent *framePixels = frame.pixels();
-
-    // TODO Move to header as constant
-    const double MS_PER_LOOP = 9.63;
 
     // loop through each frame and get Apple II image
     int frameIndex = 0;
     std::vector<short> frameDelaysMs = {};
     for (const EasyGifReader::Frame &easyGifReaderFrame : gif)
     {
-        if (frameIndex % frameModToSkip != 0)
+        int currDelay = easyGifReaderFrame.delay * 10 / MS_PER_LOOP;
+        if (currDelay > 32767)
+            currDelay = 32767; // Clamp to max signed 16-bit value
+        if (frameIndex % frameModToKeep == 0)
         {
-            int currDelay = easyGifReaderFrame.delay * 10;
-            if (currDelay > 32767)
-                currDelay = 32767; // Clamp to max signed 16-bit value
-            frameDelaysMs.push_back((short)currDelay / MS_PER_LOOP);
+            frameDelaysMs.push_back((short)currDelay);
 
             GifII::FrameData frame(easyGifReaderFrame.width(), easyGifReaderFrame.height(), easyGifReaderFrame.pixels());
 
@@ -54,6 +50,13 @@ std::string GifII::createAnimation(std::string gifPath)
             // write to .slo file
             writeAppleIIPixelsToSlo(gifAppleIIPixels, frameDelaysMs.size() - 1);
         }
+        else if (frameIndex > 0)
+        {
+            // skip this frame, add its delay to previous frame's delay
+            frameDelaysMs[frameDelaysMs.size() - 1] += currDelay;
+            if (frameDelaysMs[frameDelaysMs.size() - 1] > 32767)
+                frameDelaysMs[frameDelaysMs.size() - 1] = 32767;
+        }
 
         frameIndex++;
     }
@@ -65,6 +68,7 @@ std::string GifII::createAnimation(std::string gifPath)
     std::string outPath = createProDosDisk(frameDelaysMs.size(), gifPath);
 
     // TODO cleanup temp files
+    std::filesystem::remove_all(TEMP_DIRECTORY);
 
     return outPath;
 }
@@ -160,7 +164,7 @@ std::vector<unsigned char> GifII::FrameData::getLoResPixelData(const std::vector
 void GifII::writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileIndex)
 {
     // open file stream
-    std::string fileName = "X" + std::to_string(fileIndex) + ".SLO";
+    std::string fileName = TEMP_DIRECTORY + "X" + std::to_string(fileIndex) + ".SLO";
     std::ofstream stream(fileName, std::ios::out | std::ios::binary);
 
     // write each byte of two vertical pixels to file as raw binary
@@ -176,7 +180,7 @@ void GifII::writeAppleIIPixelsToSlo(std::vector<unsigned char> pixels, int fileI
 void GifII::writeDelayBinary(std::vector<short> frameDelaysMs)
 {
     // open file stream
-    std::string fileName = "DELAY.SLO";
+    std::string fileName = TEMP_DIRECTORY + "DELAY.SLO";
     std::ofstream stream(fileName, std::ios::out | std::ios::binary);
 
     // remove this to create delays suitable for emulating with enhanced read access
@@ -217,7 +221,7 @@ std::string GifII::createProDosDisk(int frameCount, std::string sourcePath)
     sourcePath += ".po";
 
     // create a copy of template disk
-    std::ifstream templateStream("../assets/template.po", std::ios::binary | std::ios::in);
+    std::ifstream templateStream("GIFII_TEMPLATE_DISK.po", std::ios::binary | std::ios::in);
     std::ofstream diskStream(sourcePath, std::ios::binary | std::ios::out);
     diskStream << templateStream.rdbuf();
     templateStream.close();
@@ -231,10 +235,10 @@ std::string GifII::createProDosDisk(int frameCount, std::string sourcePath)
     std::string folder = "/PRODOS/";
     for (int i = 0; i < frameCount; i++)
     {
-        fileToAdd = "X" + std::to_string(i) + ".SLO";
+        fileToAdd = TEMP_DIRECTORY + "X" + std::to_string(i) + ".SLO";
         AddFile(img, fileToAdd.data(), folder.data(), 1);
     }
-    fileToAdd = "DELAY.SLO";
+    fileToAdd = TEMP_DIRECTORY + "DELAY.SLO";
     AddFile(img, fileToAdd.data(), folder.data(), 1);
 
     return sourcePath;
