@@ -28,7 +28,6 @@ jobs:
 
     - name: Create Release Zip
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         RELEASE_ID: ${{ github.event.release.id }}
       run: Compress-Archive -Path build/Release/* -Destination GifII-Windows-${RELEASE_ID}.zip
 
