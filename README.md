@@ -27,7 +27,7 @@ To transfer your disk image to a real disk, you can use a tool such as [c2t](htt
 
 # Building from source
 
-GifII uses CMake for building, and has been successfully compiled with MSVC via GitHub Actions and GCC via VSCode's CMake extension. CMake will automatically copy the `GIFII_TEMPLATE_DISK.po` disk from source into the build folder. 
+GifII uses CMake for building, and has been successfully compiled with MSVC via GitHub Actions and GCC via VSCode's CMake extension. The code requires building with C++17 or above. CMake will automatically copy the `GIFII_TEMPLATE_DISK.po` disk from source into the build folder. 
 
 ```
 cmake -S . -B build
