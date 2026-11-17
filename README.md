@@ -1,8 +1,8 @@
 # Introduction
 
-GifII is an application that generates a ProDOS animation `.po` disk from a provided GIF. The generated disks can be run on real ProDOS-compatible Apple II machines as well as Apple II emulators.
+GifII is an application that generates a ProDOS animation `.po` disk from a provided GIF. The generated disks can be run on Apple II emulators, and should theoretically run on ProDOS-compatible Apple II hardware.
 
-For development background and example results, please visit [my blog post on the development of GifII.]()
+For development background and example results, please visit [my blog post on the development of GifII.](https://ebdavidson.com/blog/2026-11-16/)
 
 # Usage
 
