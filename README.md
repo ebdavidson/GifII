@@ -27,12 +27,13 @@ To transfer your disk image to a real disk, you can use a tool such as [c2t](htt
 
 # Building from source
 
-GifII uses CMake for building, and has been successfully compiled with MSVC via GitHub Actions and GCC via VSCode's CMake extension. CMake will automatically copy the `GIFII_TEMPLATE_DISK.po` disk from source into the build folder.
+GifII uses CMake for building, and has been successfully compiled with MSVC via GitHub Actions and GCC via VSCode's CMake extension. CMake will automatically copy the `GIFII_TEMPLATE_DISK.po` disk from source into the build folder. 
 
 ```
 cmake -S . -B build
 cmake --build build  
 ```
+The `startup.bas` in the repo is included as source for the BASIC program that runs on the generated disks, but the disk is already prebuilt with this BASIC code, so any changes to the source version will not carry over to the template disk. You will need to manually load your updated BASIC code to the template disk using a tool such as [CiderPress 2](https://ciderpress2.com/).
 
 # Notes
 - ProDOS only allows 50 files to be placed at the root of the disk image. 3 of these will be the necessary code to display the images, so a maximum of 47 frames of animation will be generated on the disk. GIFs with more than 47 frames will have some intermediate frames removed in the animation.
