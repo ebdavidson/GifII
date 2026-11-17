@@ -21,9 +21,9 @@ GifII expects the `GIFII_TEMPLATE_DISK.po` disk to be placed in the same directo
 
 The easiest way to load your generated disk is in an Apple II emulator, such as [AppleIIjs](https://www.scullinsteel.com/apple2/) or [AppleWin](https://github.com/AppleWin/AppleWin). Load the disk in Slot I and reboot the system.
 
-The disks can also be run on real ProDOS-compatible Apple II hardware. You can see the [ProDOS hardware requirements here.](https://en.wikipedia.org/wiki/Apple_ProDOS#Requirements) Disks have been tested by me on an Apple IIgs running in compatibility mode, but I expect it should work on anything ProDOS-compatible.
+The disks should hopefully work on real ProDOS-compatible Apple II hardware, though this hasn't been tested yet. You can see the [ProDOS hardware requirements here.](https://en.wikipedia.org/wiki/Apple_ProDOS#Requirements) If you run a disk on real hardware, please reach out to me via the email on [my website.](https://ebdavidson.com)
 
-To transfer your disk image to a real disk, you can use a tool such as [c2t](https://github.com/datajerk/c2t) to convert the disk into a sound file that can be sent over the cassette port and flashed to a real disk.
+To transfer your disk image to a real disk, you can use a tool such as [c2t](https://github.com/datajerk/c2t) to convert the disk into a sound file that can be sent over the cassette port.
 
 # Building from source
 
